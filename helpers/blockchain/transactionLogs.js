@@ -6,7 +6,7 @@ const {getAbi} = require('./abi');
 const network = config.get('blockchain.httpProvider');
 const provider = new ethers.providers.JsonRpcProvider(network);
 const erc20Abi = getAbi('RahatERC20');
-const rahatAbi = getAbi('Rahat');
+const rahatAbi = getAbi('Regulator');
 const erc1155Abi = getAbi('RahatERC1155');
 
 async function tokenTransaction(tokenAddress, rahatAddress, account) {

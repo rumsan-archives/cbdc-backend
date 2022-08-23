@@ -24,6 +24,7 @@ const getBytecode = contract => {
 
 const getAbi = contract => {
   const abiColl = getAbiCollection();
+  console.log({contract});
   const {contractName, abi} = abiColl[contract];
   return {contractName, abi};
 };

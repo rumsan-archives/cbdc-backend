@@ -72,6 +72,7 @@ const App = {
       // settingsData.contracts = contracts;
       // fs.writeFileSync(settingsPath, JSON.stringify(settingsData));
       payload.contracts = contracts;
+      console.log('creating agency');
       agency = await Agency.add(payload);
       await Agency.approve(agency._id);
       payload.admin.roles = ['Admin'];
@@ -80,7 +81,7 @@ const App = {
       await User.create(payload.admin);
       const settings = await this.listSettings();
       settings.user = await getByWalletAddress(payload.admin.wallet_address);
-
+      console.log('Setup Complete');
       return settings;
     } catch (e) {
       throw Error(e);
@@ -108,35 +109,37 @@ const App = {
   },
 
   async setupContracts(adminAccount, tokenName, tokenSymbol, initialSupply) {
-    console.log(adminAccount);
+    console.log('+++++++Deploying contracts+++++++');
     const {abi: erc20Abi} = getAbi('RahatERC20');
     const {bytecode: erc20Bytecode} = getBytecode('RahatERC20');
     const {abi: erc1155Abi} = getAbi('RahatERC1155');
     const {bytecode: erc1155Bytecode} = getBytecode('RahatERC1155');
-    const {abi: rahatAbi} = getAbi('Rahat');
-    const {bytecode: rahatBytecode} = getBytecode('Rahat');
-    const {abi: rahatAdminAbi} = getAbi('RahatAdmin');
-    const {bytecode: rahatAdminBytecode} = getBytecode('RahatAdmin');
+    const {abi: rahatAbi} = getAbi('Regulator');
+    const {bytecode: rahatBytecode} = getBytecode('Regulator');
+    const {abi: rahatAdminAbi} = getAbi('Admin');
+    const {bytecode: rahatAdminBytecode} = getBytecode('Admin');
     try {
+      console.log('1/4 : Deploying RahatERC20');
       const rahat_erc20 = await deployContract(erc20Abi, erc20Bytecode, [
         tokenName,
         tokenSymbol,
         adminAccount
       ]);
       console.log({rahat_erc20});
+      console.log('2/4 : Deploying RahatERC20');
       const rahat_erc1155 = await deployContract(erc1155Abi, erc1155Bytecode, [adminAccount]);
-      const rahat = await deployContract(rahatAbi, rahatBytecode, [
-        rahat_erc20,
-        rahat_erc1155,
-        adminAccount
-      ]);
+      console.log({rahat_erc1155});
+      console.log('3/4 : Deploying Rahat');
+      const rahat = await deployContract(rahatAbi, rahatBytecode, [rahat_erc20, adminAccount]);
+      console.log({rahat});
+      console.log('4/4 : Deploying RahatAdmin');
       const rahat_admin = await deployContract(rahatAdminAbi, rahatAdminBytecode, [
         rahat_erc20,
-        rahat_erc1155,
         rahat,
         initialSupply,
         adminAccount
       ]);
+      console.log({rahat_admin});
       return {rahat_erc20, rahat_erc1155, rahat, rahat_admin};
     } catch (e) {
       throw Error(`ERROR:${e}`);
