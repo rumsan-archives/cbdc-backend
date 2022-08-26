@@ -6,7 +6,6 @@ COPY . .
 #install packages
 RUN yarn
 #expose application working port
-EXPOSE 3601
 CMD ["yarn","production"]
 
 
