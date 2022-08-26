@@ -261,7 +261,12 @@ const Beneficiary = {
 
   async checkBeneficiary(phone) {
     const ben = await BeneficiaryModel.findOne({phone});
-    if (ben) return {data: true, message: 'Beneficiary Exists'};
+    console.log({ben});
+    if (ben)
+      return {
+        data: {name: ben.name, projects: ben.projects, address: ben.address},
+        message: 'Beneficiary Exists'
+      };
     return {data: false, message: 'Invalid Beneficiary Phone/Id'};
   },
 
