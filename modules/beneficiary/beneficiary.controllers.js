@@ -261,7 +261,6 @@ const Beneficiary = {
 
   async checkBeneficiary(phone) {
     const ben = await BeneficiaryModel.findOne({phone});
-    console.log({ben});
     if (ben)
       return {
         data: {name: ben.name, projects: ben.projects, address: ben.address},
