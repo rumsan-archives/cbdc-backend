@@ -60,29 +60,34 @@ const Vendor = {
   },
 
   async register(agencyId, payload) {
-    payload.agencies = [{agency: agencyId}];
-    if (!isIpfsHash(payload.photo)) {
-      const ipfsPhotoHash = await this.uploadToIpfs(this.decodeBase64Image(payload.photo).data);
-      payload.photo = ipfsPhotoHash;
-    }
-    if (!isIpfsHash(payload.govt_id_image)) {
-      const ipfsIdHash = await this.uploadToIpfs(
-        this.decodeBase64Image(payload.govt_id_image).data
-      );
-      payload.govt_id_image = ipfsIdHash;
-    }
-    const vendor = await VendorModel.create(payload);
-    await Notification.create({
-      type: CONSTANT.NOTIFICATION_TYPES.vendor_registered,
-      ...vendor._doc
-    });
+    try {
+      payload.agencies = [{agency: agencyId}];
+      console.log({payload});
+      if (!isIpfsHash(payload.photo)) {
+        const ipfsPhotoHash = await this.uploadToIpfs(this.decodeBase64Image(payload.photo).data);
+        payload.photo = ipfsPhotoHash;
+      }
+      if (!isIpfsHash(payload.govt_id_image)) {
+        const ipfsIdHash = await this.uploadToIpfs(
+          this.decodeBase64Image(payload.govt_id_image).data
+        );
+        payload.govt_id_image = ipfsIdHash;
+      }
+      const vendor = await VendorModel.create(payload);
+      await Notification.create({
+        type: CONSTANT.NOTIFICATION_TYPES.vendor_registered,
+        ...vendor._doc
+      });
 
-    await User.sendMailToAdmin({
-      template: CONSTANT.NOTIFICATION_TYPES.vendor_registered,
-      data: {user_id: vendor._id, user_name: vendor?.name}
-    });
+      await User.sendMailToAdmin({
+        template: CONSTANT.NOTIFICATION_TYPES.vendor_registered,
+        data: {user_id: vendor._id, user_name: vendor?.name}
+      });
 
-    return vendor;
+      return vendor;
+    } catch (e) {
+      console.log(e);
+    }
   },
 
   decodeBase64Image(dataString) {
