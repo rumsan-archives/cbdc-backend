@@ -117,7 +117,7 @@ class App {
         .response({
           statusCode: 500,
           error: 'Server Error',
-          message: 'Some error occured. Please try again.'
+          message: error.message
         })
         .code(500);
     }

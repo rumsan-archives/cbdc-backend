@@ -34,7 +34,6 @@ wss.create = server => {
     });
 
     ws.on('close', () => {
-      // console.log(`=======> WS: Client# ${ws.rsid} disappeared.`);
       clients = clients.filter(d => d.id !== ws.rsid);
     });
 

@@ -1,8 +1,9 @@
+const jsonwebtoken = require('jsonwebtoken');
 const {Types} = require('mongoose');
 const {nanoid} = require('nanoid');
 const config = require('config');
 const {DataUtils} = require('../../helpers/utils');
-const {ProjectModel} = require('../models');
+const {ProjectModel, InstitutionModel} = require('../models');
 const {Beneficiary} = require('../beneficiary/beneficiary.controllers');
 const {Vendor} = require('../vendor/vendor.controllers');
 const {readExcelFile, removeFile, uploadFile} = require('../../helpers/utils/fileManager');
@@ -10,6 +11,7 @@ const {getByWalletAddress} = require('../user/user.controllers');
 const {addFileToIpfs} = require('../../helpers/utils/ipfs');
 
 const aidConnectBaseURL = config.get('app.aid-connect-url');
+const {Institution} = require('../institution/institution.controllers');
 
 const Project = {
   // TODO: implement blockchain function using project._id
@@ -154,6 +156,15 @@ const Project = {
     return appended_result;
   },
 
+  async addCampaignFundRaiser(id, currentUser, payload) {
+    const {campaignTitle, campaignId} = payload;
+    const project = await ProjectModel.findOneAndUpdate(
+      {_id: id},
+      {campaignId, campaignTitle},
+      {new: true, runValidators: true}
+    );
+    return project;
+  },
   async list(query, currentUser) {
     const start = query.start || 0;
     const limit = query.limit || 10;
@@ -268,6 +279,28 @@ const Project = {
 
   getByAidConnectId(aidConnectId) {
     return ProjectModel.findOne({'aid_connect.id': aidConnectId});
+  },
+
+  async addNewInstitution(id, payload) {
+    console.log({id, payload});
+    const institution = await Institution.add(payload);
+    return this.addInstitution(id, institution.id);
+  },
+
+  async addInstitution(id, institutionId) {
+    const institution = await InstitutionModel.findOne({_id: institutionId});
+    if (!institution) throw Error('Institution with given Id not found');
+    return ProjectModel.findOneAndUpdate(
+      {_id: id},
+      {$addToSet: {financial_institutions: institutionId}},
+      {new: true, runValidators: true}
+    );
+  },
+
+  async getInstitution(id) {
+    const project = await ProjectModel.findOne({_id: id}).populate('financial_institutions');
+    if (!project) throw Error('Project with given Id not found');
+    return project.financial_institutions;
   }
 };
 
@@ -277,6 +310,8 @@ module.exports = {
   changeStatus: req => Project.changeStatus(req.params.id, req.payload),
   getById: req => Project.getById(req.params.id),
   addTokenAllocation: req => Project.addTokenAllocation(req.params.id, req.payload),
+  addCampaignFundRaiser: req =>
+    Project.addCampaignFundRaiser(req.params.id, req.currentUser, req.payload),
   list: req => Project.list(req.query, req.currentUser),
   addBeneficiary: req => {
     req.payload.project_id = req.params.id;
@@ -294,5 +329,8 @@ module.exports = {
   update: req => Project.update(req.params.id, req.payload, req.currentUser),
   uploadAndAddBenfToProject: req => Project.uploadAndAddBenfToProject(req.params.id, req.payload),
   generateAidConnectId: req => Project.generateAidConnectId(req.params.id),
-  changeAidConnectStatus: req => Project.changeAidConnectStatus(req.params.id, req.payload)
+  changeAidConnectStatus: req => Project.changeAidConnectStatus(req.params.id, req.payload),
+  addInstitution: req => Project.addInstitution(req.params.id, req.payload.institutionId),
+  getInstitution: req => Project.getInstitution(req.params.id),
+  addNewInstitution: req => Project.addNewInstitution(req.params.id, req.payload)
 };
